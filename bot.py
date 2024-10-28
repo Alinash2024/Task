@@ -1,5 +1,4 @@
-from Scripts.unicodedata import name
-from pyexpat.errors import messages
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, \
     CallbackQueryHandler, CommandHandler, ContextTypes, CallbackContext, ConversationHandler
@@ -9,6 +8,9 @@ from gpt import ChatGptService
 from util import load_message, load_prompt, send_text_buttons, send_text, \
     send_image, show_main_menu, Dialog, default_callback_handler
 
+# Настройка логирования
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     dialog.mode = 'main'
@@ -20,7 +22,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'random': 'Узнать случайный интересный факт 🧠',
         'gpt': 'Задать вопрос чату GPT 🤖',
         'talk': 'Поговорить с известной личностью 👤',
-        'quiz': 'Поучаствовать в квизе ❓'
+        'quiz': 'Поучаствовать в квизе ❓',
+        'translator': 'Переводчик 🌐',
+        'vocabulary': 'Тренажер словаря 📚'
         # Добавить команду в меню можно так:
         # 'command': 'button text'
 
@@ -57,6 +61,10 @@ async def hello(update, context):
         await talk_dialog(update, context)
     elif dialog.mode == "quiz":
         await quiz_dialog(update, context)
+    elif dialog.mode == "translator":
+        await translator_dialog(update, context)
+    elif dialog.mode == "vocabulary":
+        await vocabulary_trainer_dialog(update, context)
     else:
         await start(update, context)
 
@@ -147,7 +155,48 @@ async def quiz_answer(update, context):
         "quiz_more": "Задать еще вопрос"
     })
 
+async def translator(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    dialog.mode = 'translator'
+    text = "Выберите язык перевода:"
+    await send_text_buttons(update, context, text, {
+        "translator_en": "Английский",
+        "translator_es": "Испанский",
+        "translator_fr": "Французский",
+        "translator_de": "Немецкий",
+        "translator_ru": "Русский"
+    })
 
+async def translator_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query.data
+    await update.callback_query.answer()
+
+    selected_language = query.split('_')[-1]
+    context.user_data['selected_language'] = selected_language
+
+    await update.callback_query.edit_message_text(text=f"Выбран язык: {selected_language}. Теперь отправьте текст для перевода.")
+
+async def translator_dialog(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if 'selected_language' in context.user_data:
+        text_to_translate = update.message.text
+        selected_language = context.user_data['selected_language']
+
+        prompt = f"Translate the following text to {selected_language}: {text_to_translate}"
+        message = await send_text(update, context, "Перевожу текст...")
+        answer = await chatgpt.send_question(prompt, "")
+        await message.edit_text(f"Перевод: {answer}")
+    else:
+        await send_text(update, context, "Пожалуйста, сначала выберите язык перевода командой /translator.")
+
+async def vocabulary(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    dialog.mode = 'vocabulary'
+    text = "Генерирую новое слово с переводом и примерами использования..."
+    await send_text(update, context, text)
+
+    # Используем ChatGPT для генерации нового слова с переводом и примерами
+    prompt = "Generate a new word in English with its translation in Russian and examples of usage in sentences."
+    answer = await chatgpt.send_question(prompt, "")
+
+    await send_text(update, context, answer)
 
 
 
@@ -164,6 +213,8 @@ app.add_handler(CommandHandler("gpt", gpt))
 app.add_handler(CommandHandler("random", random))
 app.add_handler(CommandHandler("talk", talk))
 app.add_handler(CommandHandler("quiz", quiz))
+app.add_handler(CommandHandler('translator', translator))
+app.add_handler(CommandHandler("vocabulary", vocabulary))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, hello))
 # Зарегистрировать обработчик команды можно так:
 # app.add_handler(CommandHandler('command', handler_func))
@@ -172,5 +223,6 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, hello))
 # app.add_handler(CallbackQueryHandler(app_button, pattern='^app_.*'))
 app.add_handler(CallbackQueryHandler(quiz_button, pattern="^quiz_.*"))
 app.add_handler(CallbackQueryHandler(talk_button, pattern="^talk_.*"))
+app.add_handler(CallbackQueryHandler(translator_button, pattern="^translator_.*"))
 app.add_handler(CallbackQueryHandler(default_callback_handler))
 app.run_polling()
