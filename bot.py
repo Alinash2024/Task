@@ -33,7 +33,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     })
 
 # Обработчик команды /random
-async def random(update, context):
+async def random(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = load_prompt("random") # Загружаем промпт для генерации случайного факта
     message = load_message("random") # Загружаем сообщение для случайного факта
     await send_image(update,context, "random")  # Отправляем изображение для случайного факта
@@ -42,7 +42,7 @@ async def random(update, context):
     await message.edit_text(answer)  # Обновляем сообщение сгенерированным фактом
 
 # Обработчик команды /gpt
-async def gpt(update, context):
+async def gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     dialog.mode = "gpt"  # Устанавливаем режим диалога на "ChatGPT"
     prompt = load_prompt("gpt")  # Загружаем промпт для ChatGPT
     message = load_message("gpt")  # Загружаем сообщение для ChatGPT
@@ -51,20 +51,20 @@ async def gpt(update, context):
     await send_text(update, context, "Задай вопрос *ChatGPT*.")  # Отправляем сообщение с просьбой задать вопрос
 
 # Обработчик диалога с ChatGPT
-async def gpt_dialog(update, context):
+async def gpt_dialog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text  # Получаем текст сообщения пользователя
     message = await send_text(update, context, "Думаю над вопросом...")  # Отправляем сообщение о том, что бот думает
     answer = await chatgpt.add_message(text)  # Генерируем ответ с помощью ChatGPT
     await send_text(update, context, answer)  # Отправляем ответ пользователю
 
 # Обработчик текстовых сообщений
-async def hello(update, context):
+async def hello(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if dialog.mode == "gpt": # Если режим "ChatGPT", обрабатываем диалог с ChatGPT
         await gpt_dialog(update, context)
     elif dialog.mode == "talk":  # Если режим "talk", обрабатываем диалог с известной личностью
         await talk_dialog(update, context)
     elif dialog.mode == "quiz":  # Если режим "quiz", обрабатываем диалог с квизом
-        await quiz_dialog(update, context)
+        await quiz_answer(update, context)
     elif dialog.mode == "translator":  # Если режим "translator", обрабатываем диалог с переводчиком
         await translator_dialog(update, context)
     elif dialog.mode == "vocabulary":  # Если режим "vocabulary", обрабатываем диалог с тренажером словаря
@@ -73,7 +73,7 @@ async def hello(update, context):
         await start(update, context)  # Если режим не установлен, возвращаемся в главное меню
 
 # Обработчик команды /talk
-async def talk(update, context):
+async def talk(update: Update, context: ContextTypes.DEFAULT_TYPE):
     dialog.mode = "talk"  # Устанавливаем режим диалога на "talk"
     text = load_message("talk")  # Загружаем сообщение для режима "talk"
     await send_image(update, context, "talk")  # Отправляем изображение для режима "talk"
@@ -86,7 +86,7 @@ async def talk(update, context):
     })
 
 # Обработчик диалога с известной личностью
-async def talk_dialog(update, context):
+async def talk_dialog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text  # Получаем текст сообщения пользователя
     my_message = await send_text(update, context, "Набираю текст...")  # Отправляем сообщение о том, что бот набирает текст
     answer = await chatgpt.add_message(text)  # Генерируем ответ с помощью ChatGPT
@@ -105,27 +105,21 @@ async def talk_button(update, context):
     chatgpt.set_prompt(prompt)  # Устанавливаем промпт для выбранной личности
 
 # Обработчик команды /quiz
-async def quiz(update, context):
+async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
     dialog.mode = "quiz"  # Устанавливаем режим диалога на "quiz"
+    context.user_data['quiz_score'] = 0
     text = load_message("quiz")  # Загружаем сообщение для режима "quiz"
     await send_image(update, context, "quiz")  # Отправляем изображение для режима "quiz"
     await send_text_buttons(update, context, text, {  # Отображаем кнопки с выбором темы квиза
         "quiz_prog": "Программирование",
         "quiz_math": "Математика",
-        "quiz_biology": "Биология",
-        "quiz_more": "Задать еще вопрос?"
+        "quiz_biology": "Биология"
 
     })
-# Обработчик диалога с квизом
-async def quiz_dialog(update, context):
-    text = update.message.text  # Получаем текст сообщения пользователя
-    my_message = await send_text(update, context, "Проверяю ответ...")  # Отправляем сообщение о том, что бот проверяет ответ
-    answer = await chatgpt.add_message(text)  # Генерируем ответ с помощью ChatGPT
-    await my_message.edit_text(answer)  # Обновляем сообщение сгенерированным ответом
 
 
 # Обработчик нажатия на кнопку выбора темы квиза
-async def quiz_button(update, context):
+async def quiz_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query.data  # Получаем данные нажатой кнопки
     await update.callback_query.answer()  # Подтверждаем нажатие кнопки
 
