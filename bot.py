@@ -143,11 +143,10 @@ async def quiz_button(update, context):
     context.user_data['quiz_question'] = question  # Сохраняем вопрос в контексте
 
 # Обработчик ответа на вопрос квиза
-async def quiz_answer(update, context):
+async def quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_answer = update.message.text  # Получаем текст ответа пользователя
-    question = context.user_data['quiz_question']  # Получаем сохраненный вопрос
-    prompt = context.user_data['quiz_prompt']  # Получаем сохраненный промпт
-
+    question = context.user_data.get('quiz_question', '')  # Получаем сохраненный вопрос
+    prompt = context.user_data.get('quiz_prompt', '')  # Получаем сохраненный промпт
 
     # Проверка ответа
     result = await chatgpt.send_question(prompt, user_answer)  # Генерируем результат проверки ответа с помощью ChatGPT
@@ -155,11 +154,11 @@ async def quiz_answer(update, context):
 
     # Обновление счета
     if "Правильно!" in result:
-        context.user_data['quiz_score'] = context.user_data.get('quiz_score', 0) + 1 # Увеличиваем счет, если ответ правильный
+        context.user_data['quiz_score'] = context.user_data.get('quiz_score', 0) + 1  # Увеличиваем счет, если ответ правильный
 
     # Отображение счета
-    score_message = f"Счет: {context.user_data.get('quiz_score', 0)}"  # Формируем сообщение со счетом
-    await send_text(update, context, score_message)  # Отправляем сообщение со счетом
+    quiz_score = context.user_data.get('quiz_score', 0)
+    await send_text(update, context, f"Счет: {quiz_score}")
 
     # Предложение задать еще вопрос
     await send_text_buttons(update, context, "Хотите задать еще вопрос?", {  # Отображаем кнопку для запроса нового вопроса
