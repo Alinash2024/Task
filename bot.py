@@ -113,6 +113,7 @@ async def quiz(update, context):
         "quiz_prog": "Программирование",
         "quiz_math": "Математика",
         "quiz_biology": "Биология",
+        "quiz_more": "Задать еще вопрос?"
 
     })
 # Обработчик диалога с квизом
