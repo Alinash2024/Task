@@ -85,6 +85,7 @@ async def talk(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "talk_tolkien": "Джон Толкиен"
     })
 
+
 # Обработчик диалога с известной личностью
 async def talk_dialog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text  # Получаем текст сообщения пользователя
@@ -99,11 +100,12 @@ async def talk_button(update, context):
 
     await send_image(update, context, query)  # Отправляем изображение выбранной личности
     text = load_prompt(query)   # Загружаем промпт для выбранной личности
-    await send_text(update, context, text)  # Отправляем промпт для выбранной личности
+
 
     prompt = load_prompt(query)  # Загружаем промпт для выбранной личности
     chatgpt.set_prompt(prompt)  # Устанавливаем промпт для выбранной личности
-    await query.edit_message_text(text=f"Вы выбрали: {promt}. Теперь вы можете общаться с этой личностью.")
+
+
 
 # Обработчик команды /quiz
 async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
