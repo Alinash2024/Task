@@ -103,6 +103,7 @@ async def talk_button(update, context):
 
     prompt = load_prompt(query)  # Загружаем промпт для выбранной личности
     chatgpt.set_prompt(prompt)  # Устанавливаем промпт для выбранной личности
+    await query.edit_message_text(text=f"Вы выбрали: {promt}. Теперь вы можете общаться с этой личностью.")
 
 # Обработчик команды /quiz
 async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
